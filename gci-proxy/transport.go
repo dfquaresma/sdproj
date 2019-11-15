@@ -26,6 +26,8 @@ type transport struct {
 	printGC        bool
 	mu             sync.Mutex
 	checking       bool
+	rMeshClient    *fasthttp.HostClient
+	useRoutingMesh bool
 }
 
 func timeMillis() int64 {
@@ -37,7 +39,15 @@ func (t *transport) RoundTrip(ctx *fasthttp.RequestCtx) {
 		t.mu.Lock()
 		if !t.isAvailable {
 			t.mu.Unlock()
-			ctx.Error("", fasthttp.StatusServiceUnavailable)
+			if t.useRoutingMesh {
+				ctx.Request.Header.Del("Connection")
+				if err := t.rMeshClient.Do(&ctx.Request, &ctx.Response); err != nil {
+					panic(fmt.Sprintf("Problem redirecting to routing mesh:%q", err))
+				}
+				ctx.Response.Header.Del("Connection")
+			} else {
+				ctx.Error("", fasthttp.StatusServiceUnavailable)
+			}
 			return
 		}
 		t.waiter.requestArrived()
@@ -148,6 +158,38 @@ func newTransport(target string, yGen int64, printGC bool, gciTarget, gciCmdPath
 		isAvailable: true,
 		client: &fasthttp.HostClient{
 			Addr:         target,
+			Dial:         fasthttp.Dial,
+			ReadTimeout:  120 * time.Second,
+			WriteTimeout: 120 * time.Second,
+		},
+		protocolClient: &fasthttp.HostClient{
+			Addr:         gciTarget,
+			Dial:         fasthttp.Dial,
+			ReadTimeout:  120 * time.Second,
+			WriteTimeout: 120 * time.Second,
+		},
+		protocolTarget: fmt.Sprintf("http://%s/%s", gciTarget, gciCmdPath),
+		window:         newSampleWindow(time.Now().UnixNano()),
+		st:             newSheddingThreshold(time.Now().UnixNano(), yGen),
+		printGC:        printGC,
+	}
+}
+
+func newMeshedTransport(target, rMeshTarget, gciTarget, gciCmdPath string, yGen int64, printGC bool) *transport {
+	if gciTarget == "" {
+		gciTarget = target
+	}
+	return &transport{
+		isAvailable: true,
+		client: &fasthttp.HostClient{
+			Addr:         target,
+			Dial:         fasthttp.Dial,
+			ReadTimeout:  120 * time.Second,
+			WriteTimeout: 120 * time.Second,
+		}, 
+		useRoutingMesh: true,
+		rMeshClient: &fasthttp.HostClient{
+			Addr:         rMeshTarget,
 			Dial:         fasthttp.Dial,
 			ReadTimeout:  120 * time.Second,
 			WriteTimeout: 120 * time.Second,
