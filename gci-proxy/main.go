@@ -43,7 +43,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("cannot listen to -in=%q: %s", fmt.Sprintf(":%s", *port), err)
 	}
-	var t transport
+	var t *transport
 	if *useMesh {
 		t = newMeshedTransport(*target, *meshTarget, *gciTarget, *gciCmdPath, *yGen, *printGC, )
 	} else {
