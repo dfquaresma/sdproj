@@ -45,9 +45,9 @@ func main() {
 	}
 	var t transport
 	if *useMesh {
-		t := newMeshedTransport(*target, *meshTarget, *gciTarget, *gciCmdPath, *yGen, *printGC, )
+		t = newMeshedTransport(*target, *meshTarget, *gciTarget, *gciCmdPath, *yGen, *printGC, )
 	} else {
-		t := newTransport(*target, *yGen, *printGC, *gciTarget, *gciCmdPath)
+		t = newTransport(*target, *yGen, *printGC, *gciTarget, *gciCmdPath)
 	}
 	s := fasthttp.Server{
 		Handler:      t.RoundTrip,
