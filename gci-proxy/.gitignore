@@ -1,0 +1,16 @@
+*.csv
+*.swp
+*.iml
+.idea/
+gci-proxy
+nohup.out
+proxy.out
+proxy.err
+results.bin
+gci-proxy_darwin_amd64
+gci-proxy_linux_amd64
+gci-proxy_windows_amd64.exe
+bench*
+*.test
+*.out
+main
