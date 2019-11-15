@@ -26,6 +26,8 @@ var (
 	gciTarget  = flag.String("gci_target", defaultTarget, defaultTargetUsage)
 	gciCmdPath = flag.String("gci_path", "", "URl path to be appended to the target to send GCI commands.")
 	disableGCI = flag.Bool("disable_gci", false, "Whether to disable the GCI protocol (used to measure the raw proxy overhead")
+	meshTarget = flag.String("mesh_target", "", "the routing mesh target to redirect instead of return 503")
+	useMesh   = flag.Bool("use_mesh", false, "To identify if must use a transport which includes routing mesh help")
 )
 
 func main() {
@@ -41,9 +43,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("cannot listen to -in=%q: %s", fmt.Sprintf(":%s", *port), err)
 	}
-	transport := newTransport(*target, *yGen, *printGC, *gciTarget, *gciCmdPath)
+	var t transport
+	if *useMesh {
+		t := newMeshedTransport(*target, *meshTarget, *gciTarget, *gciCmdPath, *yGen, *printGC, )
+	} else {
+		t := newTransport(*target, *yGen, *printGC, *gciTarget, *gciCmdPath)
+	}
 	s := fasthttp.Server{
-		Handler:      transport.RoundTrip,
+		Handler:      t.RoundTrip,
 		ReadTimeout:  120 * time.Second,
 		WriteTimeout: 5 * time.Second,
 	}
