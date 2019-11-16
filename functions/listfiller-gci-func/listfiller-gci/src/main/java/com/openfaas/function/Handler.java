@@ -13,7 +13,7 @@ public class Handler implements com.openfaas.model.IHandler {
     public IResponse Handle(IRequest req) {
         callFunction();
         Response res = new Response();
-	    res.setBody("Done");
+	    res.setBody("ListFiller GCI! :)");
 	    return res;
     }
 

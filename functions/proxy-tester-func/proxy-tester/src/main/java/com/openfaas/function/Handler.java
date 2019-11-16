@@ -9,7 +9,7 @@ public class Handler implements com.openfaas.model.IHandler {
 
     public IResponse Handle(IRequest req) {
         Response res = new Response();
-	    res.setBody("Proxy Working!:)");
+	    res.setBody("Proxy redirection is working! :D");
 
 	    return res;
     }
