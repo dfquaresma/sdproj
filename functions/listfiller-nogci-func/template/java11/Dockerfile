@@ -37,6 +37,7 @@ RUN unzip ./entrypoint-1.0.zip
 RUN chown -R app /home/app
 USER app
 
+ENV entrypoint_port="8081"
 ENV upstream_url="http://127.0.0.1:8081"
 ENV mode="http"
 ENV CLASSPATH="/home/app/entrypoint-1.0/lib/*"
