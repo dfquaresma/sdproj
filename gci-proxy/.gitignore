@@ -2,7 +2,6 @@
 *.swp
 *.iml
 .idea/
-gci-proxy
 nohup.out
 proxy.out
 proxy.err
