@@ -54,8 +54,10 @@ func (t *transport) RoundTrip(ctx *fasthttp.RequestCtx) {
 		t.mu.Unlock()
 	}
 	ctx.Request.Header.Del("Connection")
-	if err := t.client.Do(&ctx.Request, &ctx.Response); err != nil {
-		panic(fmt.Sprintf("Problem calling proxy:%q", err))
+	for {
+                if err := t.client.Do(&ctx.Request, &ctx.Response); err == nil {
+                        break
+                }
 	}
 	ctx.Response.Header.Del("Connection")
 	if !*disableGCI {
