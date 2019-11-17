@@ -27,9 +27,9 @@ do
     mkdir -p ${LOG_PATH}
     for i in `seq 1 ${REQS}`
     do
-        curl_return=$(curl -X GET -o /dev/null -s -w '${i};%{http_code};%{time_total}\n' ${TARGET}${FUNC}-${flag})
-        check=$(echo ${curl_return} | grep -v ";200;" | wc -l)
-        if [ $check -gt 0 ]; 
+        curl_return=$(curl -X GET -o /dev/null -s -w '%{http_code};%{time_total}\n' ${TARGET}${FUNC}-${flag})
+        check=$(echo "${i};${curl_return}" | grep -v ";200;" | wc -l)
+        if [ $check -gt 0 ];
             then
                 container=$(sudo docker ps -f name=listfiller-${flag} --format "{{.ID}}")
                 for id in ${container}; 
