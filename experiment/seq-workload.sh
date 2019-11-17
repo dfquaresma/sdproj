@@ -38,7 +38,7 @@ do
                         docker cp "${id}:/home/app/proxy-stderr.log" "${TAG}-proxy-stderr-${id}.log"
                         docker logs ${id} >${TAG}-stdout-${id}.log 2>${TAG}-stderr-${id}.log
                     done
-                exit
+                break
             else
                 echo ${curl_return} >> ${FILE_NAME}
         fi
