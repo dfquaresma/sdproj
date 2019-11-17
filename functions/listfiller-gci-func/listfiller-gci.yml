@@ -7,4 +7,3 @@ functions:
     lang: java11-gci
     handler: ./listfiller-gci
     image: dfquaresma/listfiller-gci:latest
-
