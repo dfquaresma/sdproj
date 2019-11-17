@@ -41,7 +41,7 @@ do
                 done
                 break
             else
-                echo ${curl_return} >> ${FILE_NAME}
+                echo "${i};${curl_return}" >> ${FILE_NAME}
         fi
     done
     container=$(sudo docker ps -f name=listfiller-${flag} --format "{{.ID}}")
