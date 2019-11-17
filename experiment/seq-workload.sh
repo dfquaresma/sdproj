@@ -8,7 +8,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 echo "REQS: ${REQS:=10000}"
-echo "TARGET: ${TARGET:=150.165.75.122:8080/function/}"
+echo "TARGET: ${TARGET:=localhost:8080/function/}"
 echo "FUNC: ${FUNC:=listfiller}"
 echo "FLAGS: ${FLAGS:=gci nogci}"
 
@@ -25,7 +25,7 @@ do
     echo -e "status;latency" > ${FILE_NAME}
     for i in `seq 1 ${REQS}`
     do
-        curl -X GET -o /dev/null -s -w '%{http_code};%{time_total}\n' ${TARGET}${FUNC}-${flag} >> ${FILE_NAME}
+        curl -X GET -o /dev/null -s -w '%{http_code};%{time_total}\n' "${TARGET}${FUNC}-${flag}" >> ${FILE_NAME}
     done
     sed -i 's/,/./g' ${FILE_NAME}
     sed -i 's/;/,/g' ${FILE_NAME}
