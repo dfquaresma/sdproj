@@ -7,7 +7,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-echo "RESULTS_PATH: ${RESULTS_PATH:=./results}"
+echo "RESULTS_PATH: ${RESULTS_PATH:=./results/}"
 echo "NUMBER_OF_EXPERIMENTS: ${NUMBER_OF_EXPERIMENTS:=10}"
 
 mkdir -p ${RESULTS_PATH}
