@@ -22,5 +22,6 @@ do
     cd ../listfiller-nogci-func/
     sudo faas-cli up -f listfiller-nogci.yml
     cd ../../experiment
+    sleep 10
     EXPID=${expid} RESULTS_PATH=${RESULTS_PATH} bash ./seq-workload.sh
 done
