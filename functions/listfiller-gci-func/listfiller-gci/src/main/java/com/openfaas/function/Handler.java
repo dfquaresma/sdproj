@@ -24,8 +24,8 @@ public class Handler implements com.openfaas.model.IHandler {
                 list.add(i);
         }
         for (int i = 0; i < size; i++) {
-            for (int i = 0; i < size; i++) {
-                list.set(i, i + 1);
+            for (int j = 0; j < size; j++) {
+                list.set(j, j + 1);
             }
         }
     }
