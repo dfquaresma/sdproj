@@ -1,12 +1,17 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/dfquaresma/sdproj/gci-proxy-resolver/model"
+	"io/ioutil"
 	"log"
+	"net"
+	"net/http"
 	"sync"
 	"time"
-	"net"
 
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/tcplisten"
@@ -28,7 +33,8 @@ var (
 	gciTarget  = flag.String("gci_target", defaultTarget, defaultTargetUsage)
 	gciCmdPath = flag.String("gci_path", "", "URl path to be appended to the target to send GCI commands.")
 	disableGCI = flag.Bool("disable_gci", false, "Whether to disable the GCI protocol (used to measure the raw proxy overhead")
-	meshTarget = flag.String("mesh_target", "", "the routing mesh target to redirect instead of return 503")
+	gateway = flag.String("gateway", "", "The OpenFaaS gateway address and port")
+	serviceName = flag.String("service_name", "", "The OpenFaaS function name which GCI will be attached")
 	useMesh   = flag.Bool("use_mesh", false, "To identify if must use a transport which includes routing mesh help")
 )
 
@@ -46,6 +52,32 @@ func checkFunction(functionUpWg *sync.WaitGroup) {
 	}
 }
 
+func getServiceInfo(serviceInfo *model.ServiceInfo) {
+	if *useMesh {
+		url := fmt.Sprintf("http://%s/", *gateway)
+		reqBody, err := json.Marshal(model.Query{ServiceName: *serviceName})
+		if err != nil {
+			log.Fatalf("Could not resolve service info to service %s due to %s\n", *serviceName, err.Error())
+		}
+		resp, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
+		if err != nil {
+			log.Fatalf("Could not resolve service info to service %s due to %s\n", *serviceName, err.Error())
+		}
+		defer resp.Body.Close()
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalf("Could not resolve service info to service %s due to %s\n", *serviceName, err.Error())
+		}
+		err = json.Unmarshal(respBody, serviceInfo)
+		if err != nil {
+			log.Fatalf("Could not deserialize json due to %s\n", err.Error())
+		}
+		if len(serviceInfo.NodeIPs) == 0 {
+			log.Fatal("Cannot redirect to mesh if there is no available nodes\n")
+		}
+	}
+}
+
 func main() {
 	flag.Parse()
 
@@ -60,10 +92,11 @@ func main() {
 		log.Fatalf("cannot listen to -in=%q: %s", fmt.Sprintf(":%s", *port), err)
 	}
 	var functionUpWg sync.WaitGroup
+	var serviceInfo model.ServiceInfo
 	functionUpWg.Add(1)
 	var t *transport
 	if *useMesh {
-		t = newMeshedTransport(*target, *meshTarget, *gciTarget, *gciCmdPath, *yGen, *printGC, &functionUpWg)
+		t = newMeshedTransport(*target, &serviceInfo, *gciTarget, *gciCmdPath, *yGen, *printGC, &functionUpWg)
 	} else {
 		t = newTransport(*target, *yGen, *printGC, *gciTarget, *gciCmdPath)
 	}
@@ -72,6 +105,7 @@ func main() {
 		ReadTimeout:  120 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
+	go getServiceInfo(&serviceInfo)
 	go checkFunction(&functionUpWg)
 	if err := s.Serve(ln); err != nil {
 		log.Fatalf("error in fasthttp server: %s", err)
