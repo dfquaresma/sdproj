@@ -7,3 +7,5 @@ functions:
     lang: java11-gci
     handler: ./listfiller-gci
     image: dfquaresma/listfiller-gci:latest
+    labels:
+      com.openfaas.scale.min: 2
