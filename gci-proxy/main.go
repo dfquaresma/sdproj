@@ -68,13 +68,16 @@ func getServiceInfo(serviceInfo *model.ServiceInfo) {
 		if err != nil {
 			log.Fatalf("Could not resolve service info to service %s due to %s\n", *serviceName, err.Error())
 		}
-		err = json.Unmarshal(respBody, serviceInfo)
+		var tmpSInfo *model.ServiceInfo
+		err = json.Unmarshal(respBody, tmpSInfo)
 		if err != nil {
 			log.Fatalf("Could not deserialize json due to %s\n", err.Error())
 		}
-		if len(serviceInfo.NodeIPs) == 0 {
+		if len(tmpSInfo.NodeIPs) == 0 {
 			log.Fatal("Cannot redirect to mesh if there is no available nodes\n")
 		}
+		serviceInfo.NodeIPs = tmpSInfo.NodeIPs
+		serviceInfo.PublishedPort = tmpSInfo.PublishedPort
 	}
 }
 
@@ -92,7 +95,7 @@ func main() {
 		log.Fatalf("cannot listen to -in=%q: %s", fmt.Sprintf(":%s", *port), err)
 	}
 	var functionUpWg sync.WaitGroup
-	var serviceInfo model.ServiceInfo
+	serviceInfo := model.ServiceInfo{NodeIPs: make([]string, 0, 0), PublishedPort:0}
 	functionUpWg.Add(1)
 	var t *transport
 	if *useMesh {

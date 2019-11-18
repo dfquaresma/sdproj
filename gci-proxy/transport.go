@@ -44,9 +44,13 @@ func (t *transport) RoundTrip(ctx *fasthttp.RequestCtx) {
 		if !t.isAvailable {
 			t.mu.Unlock()
 			if t.useRoutingMesh {
-				ctx.Request.Header.Del("Connection")
-				randomIndex := rand.Intn(len(t.functionServiceInfo.NodeIPs))
+				meshNodesSize := len(t.functionServiceInfo.NodeIPs)
+				if meshNodesSize == 0 {
+					panic(fmt.Sprint("Unable to redirect to a zero meshing cluster"))
+				}
+				randomIndex := rand.Intn(meshNodesSize)
 				t.rMeshClient.Addr = fmt.Sprintf("%s:%d", t.functionServiceInfo.NodeIPs[randomIndex], t.functionServiceInfo.PublishedPort)
+				ctx.Request.Header.Del("Connection")
 				if err := t.rMeshClient.Do(&ctx.Request, &ctx.Response); err != nil {
 					panic(fmt.Sprintf("Problem redirecting to routing mesh:%q", err))
 				}
