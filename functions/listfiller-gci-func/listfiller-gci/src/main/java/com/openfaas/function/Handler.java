@@ -18,10 +18,15 @@ public class Handler implements com.openfaas.model.IHandler {
     }
 
     public void callFunction() {
-        int size = (int) Math.pow(2, 15);
+        int size = (int) Math.pow(2, 17);
         List<Integer> list  = new ArrayList();
         for (int i = 0; i < size; i++) {
                 list.add(i);
+        }
+        for (int i = 0; i < size; i++) {
+            for (int i = 0; i < size; i++) {
+                list.set(i, i + 1);
+            }
         }
     }
 }
