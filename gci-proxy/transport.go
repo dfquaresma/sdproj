@@ -28,6 +28,7 @@ type transport struct {
 	checking       bool
 	rMeshClient    *fasthttp.HostClient
 	useRoutingMesh bool
+	functionUpWg   sync.WaitGroup
 }
 
 func timeMillis() int64 {
@@ -53,6 +54,7 @@ func (t *transport) RoundTrip(ctx *fasthttp.RequestCtx) {
 		t.waiter.requestArrived()
 		t.mu.Unlock()
 	}
+	t.functionUpWg.Wait()
 	ctx.Request.Header.Del("Connection")
 	if err := t.client.Do(&ctx.Request, &ctx.Response); err != nil {
 		panic(fmt.Sprintf("Problem calling proxy:%q", err))
@@ -175,7 +177,7 @@ func newTransport(target string, yGen int64, printGC bool, gciTarget, gciCmdPath
 	}
 }
 
-func newMeshedTransport(target, rMeshTarget, gciTarget, gciCmdPath string, yGen int64, printGC bool) *transport {
+func newMeshedTransport(target, rMeshTarget, gciTarget, gciCmdPath string, yGen int64, printGC bool, functionUpWg sync.WaitGroup) *transport {
 	if gciTarget == "" {
 		gciTarget = target
 	}
@@ -204,5 +206,6 @@ func newMeshedTransport(target, rMeshTarget, gciTarget, gciCmdPath string, yGen 
 		window:         newSampleWindow(time.Now().UnixNano()),
 		st:             newSheddingThreshold(time.Now().UnixNano(), yGen),
 		printGC:        printGC,
+		functionUpWg:	functionUpWg,
 	}
 }

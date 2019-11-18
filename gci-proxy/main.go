@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"sync"
 	"time"
+	"net"
 
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/tcplisten"
@@ -13,8 +15,8 @@ import (
 const (
 	defaultPort        = "3000"
 	defaultPortUsage   = "default server port, '3000'"
-	defaultTarget      = "http://127.0.0.1:8080"
-	defaultTargetUsage = "default redirect url, 'http://127.0.0.1:8080'"
+	defaultTarget      = "http://127.0.0.1:8082"
+	defaultTargetUsage = "default redirect url, 'http://127.0.0.1:8082'"
 )
 
 // Flags.
@@ -30,6 +32,20 @@ var (
 	useMesh   = flag.Bool("use_mesh", false, "To identify if must use a transport which includes routing mesh help")
 )
 
+func checkFunction(functionUpWg sync.WaitGroup) {
+	for {
+		conn, err := net.Dial("tcp", *target)
+		if err != nil {
+			time.Sleep(time.Millisecond * 10)
+			continue
+		}
+		conn.Close()
+		log.Print("Function is up and running!")
+		functionUpWg.Done()
+		return
+	}
+}
+
 func main() {
 	flag.Parse()
 
@@ -43,9 +59,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("cannot listen to -in=%q: %s", fmt.Sprintf(":%s", *port), err)
 	}
+	var functionUpWg sync.WaitGroup
+	functionUpWg.Add(1)
 	var t *transport
 	if *useMesh {
-		t = newMeshedTransport(*target, *meshTarget, *gciTarget, *gciCmdPath, *yGen, *printGC, )
+		t = newMeshedTransport(*target, *meshTarget, *gciTarget, *gciCmdPath, *yGen, *printGC, functionUpWg)
 	} else {
 		t = newTransport(*target, *yGen, *printGC, *gciTarget, *gciCmdPath)
 	}
@@ -54,6 +72,7 @@ func main() {
 		ReadTimeout:  120 * time.Second,
 		WriteTimeout: 5 * time.Second,
 	}
+	go checkFunction(functionUpWg)
 	if err := s.Serve(ln); err != nil {
 		log.Fatalf("error in fasthttp server: %s", err)
 	}
