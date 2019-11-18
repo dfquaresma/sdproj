@@ -7,3 +7,5 @@ functions:
     lang: java11
     handler: ./proxy-tester
     image: dfquaresma/proxy-tester:latest
+    labels:
+      com.openfaas.scale.min: 2

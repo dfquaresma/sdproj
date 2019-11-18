@@ -7,4 +7,5 @@ functions:
     lang: java11
     handler: ./listfiller-nogci
     image: dfquaresma/listfiller-nogci:latest
-
+    labels:
+      com.openfaas.scale.min: 2
