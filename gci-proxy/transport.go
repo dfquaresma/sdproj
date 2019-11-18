@@ -28,7 +28,7 @@ type transport struct {
 	checking       bool
 	rMeshClient    *fasthttp.HostClient
 	useRoutingMesh bool
-	functionUpWg   sync.WaitGroup
+	functionUpWg   *sync.WaitGroup
 }
 
 func timeMillis() int64 {
@@ -177,7 +177,7 @@ func newTransport(target string, yGen int64, printGC bool, gciTarget, gciCmdPath
 	}
 }
 
-func newMeshedTransport(target, rMeshTarget, gciTarget, gciCmdPath string, yGen int64, printGC bool, functionUpWg sync.WaitGroup) *transport {
+func newMeshedTransport(target, rMeshTarget, gciTarget, gciCmdPath string, yGen int64, printGC bool, functionUpWg *sync.WaitGroup) *transport {
 	if gciTarget == "" {
 		gciTarget = target
 	}

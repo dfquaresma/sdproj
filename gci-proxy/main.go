@@ -32,7 +32,7 @@ var (
 	useMesh   = flag.Bool("use_mesh", false, "To identify if must use a transport which includes routing mesh help")
 )
 
-func checkFunction(functionUpWg sync.WaitGroup) {
+func checkFunction(functionUpWg *sync.WaitGroup) {
 	for {
 		conn, err := net.Dial("tcp", *target)
 		if err != nil {
@@ -63,16 +63,16 @@ func main() {
 	functionUpWg.Add(1)
 	var t *transport
 	if *useMesh {
-		t = newMeshedTransport(*target, *meshTarget, *gciTarget, *gciCmdPath, *yGen, *printGC, functionUpWg)
+		t = newMeshedTransport(*target, *meshTarget, *gciTarget, *gciCmdPath, *yGen, *printGC, &functionUpWg)
 	} else {
 		t = newTransport(*target, *yGen, *printGC, *gciTarget, *gciCmdPath)
 	}
 	s := fasthttp.Server{
 		Handler:      t.RoundTrip,
 		ReadTimeout:  120 * time.Second,
-		WriteTimeout: 5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
-	go checkFunction(functionUpWg)
+	go checkFunction(&functionUpWg)
 	if err := s.Serve(ln); err != nil {
 		log.Fatalf("error in fasthttp server: %s", err)
 	}
