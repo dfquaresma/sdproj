@@ -10,14 +10,7 @@ COPY --from=watchdog /fwatchdog /usr/bin/fwatchdog
 RUN chmod +x /usr/bin/fwatchdog
 
 WORKDIR /go/src/handler
-COPY . .
-
-# Run a gofmt and exclude all vendored code.
-RUN test -z "$(gofmt -l $(find . -type f -name '*.go' -not -path "./vendor/*" -not -path "./function/vendor/*"))" || { echo "Run \"gofmt -s -w\" on your Golang code"; exit 1; }
-
-RUN CGO_ENABLED=${CGO_ENABLED} GOOS=linux \
-    go build --ldflags "-s -w" -a -installsuffix cgo -o gci-proxy-resolver . && \
-    go test $(go list ./... | grep -v /vendor/) -cover
+COPY gci-proxy-resolver .
 
 FROM alpine:3.10
 RUN apk --no-cache add \
@@ -30,7 +23,7 @@ RUN mkdir -p /home/app
 WORKDIR /home/app
 
 COPY --from=builder /usr/bin/fwatchdog         .
-COPY --from=builder /go/src/handler/handler    .
+COPY --from=builder /go/src/handler    .
 
 RUN chown -R app /home/app
 
