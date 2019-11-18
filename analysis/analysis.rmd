@@ -1,0 +1,42 @@
+---
+title: "GCI Impact on OpenFaaS - SDPROJ"
+author: 
+- "David Ferreira Quaresma (david.quaresma@ccc.ufcg.edu.br)"
+- "Paulo Felipe Feitosa (paulofelipe.feitosa@gmail.com)"
+date: "november, 2019"
+output: pdf_document
+---
+
+# GCI vs NOGCI
+```{r echo=FALSE, results='hide', message=FALSE}
+source("functions.R")
+
+gci   = filter(read.al(paste("../experiment/results/",   "listfiller-gci1", ".csv", sep="")), status == 200)
+nogci = filter(read.al(paste("../experiment/results/", "listfiller-nogci1", ".csv", sep="")), status == 200)
+for (i in 2:10) {
+  gci   = rbind(gci, filter(read.al(paste("../experiment/results/",   "listfiller-gci", as.character(i), ".csv", sep="")), status == 200))
+  nogci = rbind(nogci, filter(read.al(paste("../experiment/results/", "listfiller-nogci", as.character(i), ".csv", sep="")), status == 200))
+}
+gci$latency = gci$latency * 1000
+nogci$latency = nogci$latency * 1000
+```
+
+#### ECDF for response time
+```{r  fig.width=15, fig.height=5, echo=FALSE}
+graph_tail(gci$latency, nogci$latency, title="THUMBNAILATOR ECDF LATENCY", x_limit_sup=400)
+```
+
+#### summary table of confidence interval for response time, both in milliseconds
+```{r  fig.width=15, fig.height=5, echo=FALSE}
+summary_table(gci$latency, "gci", nogci$latency, "nogci")
+```
+
+#### GCI: plot response time
+```{r fig.width=10, fig.height=5, echo=FALSE}
+plot(gci$latency, ylab="response time", main="GCI")
+```
+
+#### NOGCI: plot response time
+```{r fig.width=10, fig.height=5, echo=FALSE}
+plot(nogci$latency, ylab="response time", main="NOGCI")
+```
