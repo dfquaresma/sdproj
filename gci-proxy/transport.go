@@ -52,6 +52,7 @@ func (t *transport) RoundTrip(ctx *fasthttp.RequestCtx) {
 				t.rMeshClient.Addr = fmt.Sprintf("%s:%d", t.functionServiceInfo.NodeIPs[randomIndex], t.functionServiceInfo.PublishedPort)
 				ctx.Request.Header.Del("Connection")
 				if err := t.rMeshClient.Do(&ctx.Request, &ctx.Response); err != nil {
+					// TODO: retry to another mesh node
 					panic(fmt.Sprintf("Problem redirecting to routing mesh:%q", err))
 				}
 				ctx.Response.Header.Del("Connection")
