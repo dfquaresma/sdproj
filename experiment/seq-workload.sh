@@ -40,6 +40,7 @@ do
                     docker logs ${id} >${LOG_PATH}stdout-${id}.log 2>${LOG_PATH}stderr-${id}.log
                 done
                 break
+                echo "${i};${curl_return}" >> ${FILE_NAME}
             else
                 echo "${i};${curl_return}" >> ${FILE_NAME}
         fi
