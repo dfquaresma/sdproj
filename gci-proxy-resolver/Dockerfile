@@ -16,7 +16,7 @@ COPY . .
 RUN test -z "$(gofmt -l $(find . -type f -name '*.go' -not -path "./vendor/*" -not -path "./function/vendor/*"))" || { echo "Run \"gofmt -s -w\" on your Golang code"; exit 1; }
 
 RUN CGO_ENABLED=${CGO_ENABLED} GOOS=linux \
-    go build --ldflags "-s -w" -a -installsuffix cgo -o handler . && \
+    go build --ldflags "-s -w" -a -installsuffix cgo -o gci-proxy-resolver . && \
     go test $(go list ./... | grep -v /vendor/) -cover
 
 FROM alpine:3.10
@@ -30,7 +30,6 @@ RUN mkdir -p /home/app
 WORKDIR /home/app
 
 COPY --from=builder /usr/bin/fwatchdog         .
-COPY --from=builder /go/src/handler/function/  .
 COPY --from=builder /go/src/handler/handler    .
 
 RUN chown -R app /home/app
@@ -40,8 +39,8 @@ USER app
 ENV upstream_url="http://127.0.0.1:8082"
 ENV mode="http"
 
-ENV fprocess="./handler"
-ENV MANAGER_ADDRESSES="150.165.75.122:2377,150.165.75.125:2377"
+ENV fprocess="./gci-proxy-resolver"
+ENV MANAGER_ADDRESSES="150.165.75.121:5555,150.165.75.125:5555"
 EXPOSE 8080
 
 HEALTHCHECK --interval=3s CMD [ -e /tmp/.lock ] || exit 1
