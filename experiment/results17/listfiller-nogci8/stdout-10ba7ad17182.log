@@ -1,0 +1,1 @@
+Forking - java [-server -Xms1024m -Xmx1024m -XX:+UnlockExperimentalVMOptions -XX:+UseSerialGC -Xlog:gc:file=/home/app/gc.log com.openfaas.entrypoint.App]
