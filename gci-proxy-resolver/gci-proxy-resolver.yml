@@ -3,7 +3,7 @@ provider:
   name: openfaas
   gateway: http://127.0.0.1:8080
 functions:
-  listfiller-gci:
+  gci-proxy-resolver:
     lang: dockerfile
     handler: .
     image: pfelipefeitosa/gci-proxy-resolver:latest
