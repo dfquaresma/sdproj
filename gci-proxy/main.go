@@ -121,7 +121,6 @@ func getPublishedPort(clusterInfo *model.ClusterInfo) uint32 {
 func main() {
 	flag.Parse()
 
-	log.Printf("TO WORKANDO\n")
 	if *yGen == 0 {
 		log.Fatalf("ygen can not be 0. ygen:%d", *yGen)
 	}
