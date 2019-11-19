@@ -11,11 +11,11 @@ output: pdf_document
 ```{r echo=FALSE, results='hide', message=FALSE}
 source("functions.R")
 
-gci   = filter(read.al(paste("../experiment/results/",   "listfiller-gci1", ".csv", sep="")), status == 200)
-nogci = filter(read.al(paste("../experiment/results/", "listfiller-nogci1", ".csv", sep="")), status == 200)
+gci   = filter(read.al(paste("../experiment/results17/",   "listfiller-gci1", ".csv", sep="")), status == 200)
+nogci = filter(read.al(paste("../experiment/results17/", "listfiller-nogci1", ".csv", sep="")), status == 200)
 for (i in 2:10) {
-  gci   = rbind(gci, filter(read.al(paste("../experiment/results/",   "listfiller-gci", as.character(i), ".csv", sep="")), status == 200))
-  nogci = rbind(nogci, filter(read.al(paste("../experiment/results/", "listfiller-nogci", as.character(i), ".csv", sep="")), status == 200))
+  gci   = rbind(gci, filter(read.al(paste("../experiment/results17/",   "listfiller-gci", as.character(i), ".csv", sep="")), status == 200))
+  nogci = rbind(nogci, filter(read.al(paste("../experiment/results17/", "listfiller-nogci", as.character(i), ".csv", sep="")), status == 200))
 }
 gci$latency = gci$latency * 1000
 nogci$latency = nogci$latency * 1000
