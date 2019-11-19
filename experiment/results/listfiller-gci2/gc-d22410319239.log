@@ -1,0 +1,2 @@
+[0.004s][info][gc] Using Serial
+[132.930s][info][gc] GC(0) Pause Full (JvmtiEnv ForceGarbageCollection) 170M->2M(486M) 32.426ms
