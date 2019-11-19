@@ -10,7 +10,7 @@ NC='\033[0m'
 echo "REQS: ${REQS:=10000}"
 echo "TARGET: ${TARGET:=localhost:8080/function/}"
 echo "FUNC: ${FUNC:=listfiller}"
-echo "FLAGS: ${FLAGS:=gci nogci}"
+echo "FLAGS: ${FLAGS:= gci}" # gci nogci}"
 
 # To avoid execution without passing environment variables
 if [[ (-z "$EXPID") || (-z "$RESULTS_PATH") ]];
@@ -32,6 +32,7 @@ do
         sleep 1
         cd ../functions/listfiller-gci-func/
         sudo faas-cli up -f listfiller-gci.yml
+        sleep 1
         sudo docker service update --publish-add published=31123,target=8080 listfiller-gci
 
     else
@@ -40,7 +41,7 @@ do
 
     fi
     cd ../../experiment
-    sleep 3
+    sleep 20
 
     FILE_NAME="${RESULTS_PATH}${FUNC}-${flag}${EXPID}.csv"
     echo -e "id;body;status;latency" > ${FILE_NAME}
@@ -60,6 +61,14 @@ do
                     docker cp "${id}:/home/app/proxy-stderr.log" "${LOG_PATH}proxy-stderr-${id}.log"
                     docker logs ${id} >${LOG_PATH}stdout-${id}.log 2>${LOG_PATH}stderr-${id}.log
                 done
+                if [ "$flag" = "gci" ]
+                then
+                    resolver=$(sudo docker ps -f name=gci-proxy-resolver --format "{{.ID}}")
+                    for id in ${resolver};
+                    do
+                        docker logs ${id} >${LOG_PATH}resout-${id}.log 2>${LOG_PATH}reserr-${id}.log
+                    done
+                fi
                 echo "${i};${curl_return}" >> ${FILE_NAME}
                 break
             else
