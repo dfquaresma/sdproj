@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/dfquaresma/sdproj/gci-proxy-resolver/model"
+	"github.com/docker/docker/api/types/swarm"
 	"io/ioutil"
 	"log"
 	"net"
@@ -26,7 +26,7 @@ const (
 
 // Flags.
 var (
-	port       = flag.String("port", defaultPort, defaultPortUsage)
+	port       		= flag.String("port", defaultPort, defaultPortUsage)
 	target          = flag.String("target", defaultTarget, defaultTargetUsage)
 	yGen            = flag.Int64("ygen", 0, "Young generation size, in bytes.")
 	printGC         = flag.Bool("print_gc", true, "Whether to print gc information.")
@@ -52,40 +52,62 @@ func checkFunction(functionUpWg *sync.WaitGroup) {
 	}
 }
 
-func getServiceInfo(serviceInfo *model.ServiceInfo) {
+func buildServiceInfo(serviceInfo *ServiceInfo) {
 	if *useMesh {
-		reqBody, err := json.Marshal(model.Query{ServiceName: *serviceName})
+		resp, err := http.Get(*meshResolverURL)
 		if err != nil {
-			log.Fatalf("Could not resolve service info to service %s due to %s\n", *serviceName, err.Error())
+			log.Fatalf("Could not resolve nodes list due to %s\n", err.Error())
 		}
-		for i := 0; i < 25; i++ {
-			resp, err := http.Post(*meshResolverURL, "application/json", bytes.NewBuffer(reqBody))
-			if err != nil {
-				log.Fatalf("Could not resolve service info to service %s due to %s\n", *serviceName, err.Error())
-			}
-			respBody, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				log.Fatalf("Could not read response body due to %s\n", err.Error())
-			}
-			resp.Body.Close()
-			if resp.StatusCode < 300 {
-				var tmpSInfo *model.ServiceInfo
-				err = json.Unmarshal(respBody, tmpSInfo)
-				if err != nil {
-					log.Fatalf("Could not deserialize json due to %s\n", err.Error())
-				}
-				if len(tmpSInfo.NodeIPs) == 0 {
-					log.Fatal("Cannot redirect to mesh if there is no available nodes\n")
-				}
-				serviceInfo.NodeIPs = tmpSInfo.NodeIPs
-				serviceInfo.PublishedPort = tmpSInfo.PublishedPort
-			} else if resp.StatusCode == http.StatusNotFound {
-				time.Sleep(100 * time.Millisecond)
-				continue
-			} else {
-				log.Fatalf("Received HTTP Status Code Response %d with Body: %s\n", resp.StatusCode, respBody)
-			}
+		defer resp.Body.Close()
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalf("Could not read response body due to %s\n", err.Error())
 		}
+		if resp.StatusCode < 300 {
+			var clusterInfo *model.ClusterInfo
+			err = json.Unmarshal(respBody, clusterInfo)
+			if err != nil {
+				log.Fatalf("Could not deserialize json due to %s\n", err.Error())
+			}
+			if len(clusterInfo.NodeIPs) == 0 {
+				log.Fatal("Cannot redirect to mesh if there is no available nodes\n")
+			}
+			serviceInfo.NodeIPs = clusterInfo.NodeIPs
+			serviceInfo.PublishedPort = getPublishedPort(clusterInfo)
+		} else {
+			log.Fatalf("Received HTTP Status Code Response %d with Body: %s\n", resp.StatusCode, respBody)
+		}
+	}
+}
+
+func getPublishedPort(clusterInfo *model.ClusterInfo) uint32 {
+	n := len(clusterInfo.ManagerAddresses)
+	for i := 0;; i = (i + 1) % n {
+		servicesUrl := fmt.Sprintf("http://%s/v1.40/services/%s", clusterInfo.ManagerAddresses[i], *serviceName)
+		resp, err := http.Get(servicesUrl)
+		if err != nil {
+			log.Fatalf("Could not get published port for service %s due to %s\n", *serviceName, err.Error())
+		}
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalf("Received http status code %d and error while trying to read body: %v", resp.StatusCode, err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode < 300 {
+			var service swarm.Service
+			err = json.Unmarshal(body, &service)
+			if err != nil {
+				log.Fatalf("Unable to deserialize json: %+q\ndue to %+q", body, err.Error())
+			}
+			if service.Endpoint.Ports != nil {
+				for _, portSpec := range service.Endpoint.Ports {
+					return portSpec.PublishedPort
+				}
+			}
+		} else {
+			log.Fatalf("Received http status code %d and response body: %s", resp.StatusCode, body)
+		}
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
@@ -103,7 +125,7 @@ func main() {
 		log.Fatalf("cannot listen to -in=%q: %s", fmt.Sprintf(":%s", *port), err)
 	}
 	var functionUpWg sync.WaitGroup
-	serviceInfo := model.ServiceInfo{NodeIPs: make([]string, 0, 0), PublishedPort:0}
+	serviceInfo := ServiceInfo{NodeIPs: make([]string, 0, 0), PublishedPort:0}
 	functionUpWg.Add(1)
 	var t *transport
 	if *useMesh {
@@ -116,7 +138,7 @@ func main() {
 		ReadTimeout:  120 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
-	go getServiceInfo(&serviceInfo)
+	go buildServiceInfo(&serviceInfo)
 	go checkFunction(&functionUpWg)
 	if err := s.Serve(ln); err != nil {
 		log.Fatalf("error in fasthttp server: %s", err)

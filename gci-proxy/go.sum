@@ -1,6 +1,5 @@
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/dfquaresma/sdproj v0.0.0-20191118173732-58a64a8f87ed h1:PJ8o1Yk/GRlPo31IiBkF7Y0WVTCNqZAOS9XnA8ROOAM=
 github.com/dfquaresma/sdproj v0.0.0-20191118174729-77673515991f h1:TQOpDebZor4TarljA33p32KQwhL66aZnIGfcCHrRggQ=
 github.com/dfquaresma/sdproj v0.0.0-20191118174729-77673515991f/go.mod h1:CuFbHpNeNAhY7EaPrc0M05yttx+FZZ901xtBj0XKHdA=
 github.com/docker/docker v1.13.1 h1:IkZjBSIc8hBjLpqeAbeE5mca5mNgeatLHBy3GO78BWo=
@@ -11,8 +10,6 @@ github.com/docker/go-units v0.4.0 h1:3uh0PgVws3nIA0Q+MwDC8yjEPf9zjRfZZWXZYDct3Tw
 github.com/docker/go-units v0.4.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
 github.com/gcinterceptor/gci-go v0.0.0-20180810200128-8390b3489ca0 h1:KlZX4kfDz0nb5ltJ6rMFFJ08Qx+tkIyUXzBK95B+SoA=
 github.com/gcinterceptor/gci-go v0.0.0-20180810200128-8390b3489ca0/go.mod h1:SauRU+Yd1+tdaWNsNMk1VJxWNKUat5X88T4OX3270V0=
-github.com/gorilla/mux v1.7.3 h1:gnP5JzjVOuiZD07fKKToCAOjS0yOpj/qPETTXCCS6hw=
-github.com/gorilla/mux v1.7.3/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2zaAs=
 github.com/klauspost/compress v1.4.0 h1:8nsMz3tWa9SWWPL60G1V6CUsf4lLjWLTNEtibhe8gh8=
 github.com/klauspost/compress v1.4.0/go.mod h1:RyIbtBH6LamlWaDj8nUwkbUhJ87Yi3uG0guNDohfE1A=
 github.com/klauspost/compress v1.5.0 h1:iDac0ZKbmSA4PRrRuXXjZL8C7UoJan8oBYxXkMzEQrI=
