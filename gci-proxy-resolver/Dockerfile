@@ -8,8 +8,14 @@ ARG ADDITIONAL_PACKAGE
 COPY --from=watchdog /fwatchdog /usr/bin/fwatchdog
 RUN chmod +x /usr/bin/fwatchdog
 
-WORKDIR /go/src/handler
-COPY gci-proxy-resolver .
+RUN apk --no-cache add git
+
+WORKDIR /go/src/github.com/dfquaresma
+RUN git clone https://github.com/dfquaresma/sdproj.git \
+     && cd sdproj/gci-proxy-resolver \
+     && go get -v -u github.com/gorilla/mux \
+     && go get -v -u github.com/docker/docker/api/types/swarm \
+     && go build
 
 FROM alpine:3.10
 RUN apk --no-cache add \
@@ -21,8 +27,8 @@ RUN mkdir -p /home/app
 
 WORKDIR /home/app
 
-COPY --from=builder /usr/bin/fwatchdog         .
-COPY --from=builder /go/src/handler    .
+COPY --from=builder /usr/bin/fwatchdog                                                  .
+COPY --from=builder /go/src/github.com/dfquaresma/sdproj/gci-proxy-resolver/gci-proxy-resolver     .
 
 RUN chown -R app /home/app
 
