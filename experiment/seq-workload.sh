@@ -21,13 +21,34 @@ fi
 
 for flag in ${FLAGS};
 do
+    sudo faas-cli remove gci-proxy-resolver
+    sudo faas-cli remove listfiller-gci
+    sudo faas-cli remove listfiller-nogci
+    sleep 1
+    if [ "$flag" = "gci" ]
+    then
+        cd ../gci-proxy-resolver/
+        sudo faas-cli deploy -f gci-proxy-resolver.yml
+        sleep 1
+        cd ../functions/listfiller-gci-func/
+        sudo faas-cli up -f listfiller-gci.yml
+        sudo docker service update --publish-add published=31123,target=8080 listfiller-gci
+
+    else
+        cd ../functions/listfiller-nogci-func/
+        sudo faas-cli up -f listfiller-nogci.yml
+
+    fi
+    cd ../../experiment
+    sleep 3
+
     FILE_NAME="${RESULTS_PATH}${FUNC}-${flag}${EXPID}.csv"
-    echo -e "id;status;latency" > ${FILE_NAME}
+    echo -e "id;body;status;latency" > ${FILE_NAME}
     LOG_PATH=${RESULTS_PATH}${FUNC}-${flag}${EXPID}/
     mkdir -p ${LOG_PATH}
     for i in `seq 1 ${REQS}`
     do
-        curl_return=$(curl -X GET -o /dev/null -s -w '%{http_code};%{time_total}\n' ${TARGET}${FUNC}-${flag})
+        curl_return=$(curl -X GET -s -w ';%{http_code};%{time_total}\n' ${TARGET}${FUNC}-${flag})
         check=$(echo "${i};${curl_return}" | grep -v ";200;" | wc -l)
         if [ $check -gt 0 ];
             then
