@@ -27,15 +27,15 @@ const (
 // Flags.
 var (
 	port       = flag.String("port", defaultPort, defaultPortUsage)
-	target     = flag.String("target", defaultTarget, defaultTargetUsage)
-	yGen       = flag.Int64("ygen", 0, "Young generation size, in bytes.")
-	printGC    = flag.Bool("print_gc", true, "Whether to print gc information.")
-	gciTarget  = flag.String("gci_target", defaultTarget, defaultTargetUsage)
-	gciCmdPath = flag.String("gci_path", "", "URl path to be appended to the target to send GCI commands.")
-	disableGCI = flag.Bool("disable_gci", false, "Whether to disable the GCI protocol (used to measure the raw proxy overhead")
-	gateway = flag.String("gateway", "", "The OpenFaaS gateway address and port")
-	serviceName = flag.String("service_name", "", "The OpenFaaS function name which GCI will be attached")
-	useMesh   = flag.Bool("use_mesh", false, "To identify if must use a transport which includes routing mesh help")
+	target          = flag.String("target", defaultTarget, defaultTargetUsage)
+	yGen            = flag.Int64("ygen", 0, "Young generation size, in bytes.")
+	printGC         = flag.Bool("print_gc", true, "Whether to print gc information.")
+	gciTarget       = flag.String("gci_target", defaultTarget, defaultTargetUsage)
+	gciCmdPath      = flag.String("gci_path", "", "URl path to be appended to the target to send GCI commands.")
+	disableGCI      = flag.Bool("disable_gci", false, "Whether to disable the GCI protocol (used to measure the raw proxy overhead")
+	meshResolverURL = flag.String("mesh_resolver_url", "", "The OpenFaaS Mesh Resolver URL address and port")
+	serviceName     = flag.String("service_name", "", "The OpenFaaS function name which GCI will be attached")
+	useMesh         = flag.Bool("use_mesh", false, "To identify if must use a transport which includes routing mesh help")
 )
 
 func checkFunction(functionUpWg *sync.WaitGroup) {
@@ -54,12 +54,11 @@ func checkFunction(functionUpWg *sync.WaitGroup) {
 
 func getServiceInfo(serviceInfo *model.ServiceInfo) {
 	if *useMesh {
-		url := fmt.Sprintf("http://%s/function/gci-proxy-resolver", *gateway)
 		reqBody, err := json.Marshal(model.Query{ServiceName: *serviceName})
 		if err != nil {
 			log.Fatalf("Could not resolve service info to service %s due to %s\n", *serviceName, err.Error())
 		}
-		resp, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
+		resp, err := http.Post(*meshResolverURL, "application/json", bytes.NewBuffer(reqBody))
 		if err != nil {
 			log.Fatalf("Could not resolve service info to service %s due to %s\n", *serviceName, err.Error())
 		}
