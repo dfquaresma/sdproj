@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/dfquaresma/sdproj/gci-proxy-resolver/model"
-	"github.com/docker/docker/api/types/swarm"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/dfquaresma/sdproj/gci-proxy-resolver/model"
+	"github.com/docker/docker/api/types/swarm"
 
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/tcplisten"
@@ -26,7 +27,7 @@ const (
 
 // Flags.
 var (
-	port       		= flag.String("port", defaultPort, defaultPortUsage)
+	port            = flag.String("port", defaultPort, defaultPortUsage)
 	target          = flag.String("target", defaultTarget, defaultTargetUsage)
 	yGen            = flag.Int64("ygen", 0, "Young generation size, in bytes.")
 	printGC         = flag.Bool("print_gc", true, "Whether to print gc information.")
@@ -64,16 +65,22 @@ func buildServiceInfo(serviceInfo *ServiceInfo) {
 			log.Fatalf("Could not read response body due to %s\n", err.Error())
 		}
 		if resp.StatusCode < 300 {
-			var clusterInfo *model.ClusterInfo
-			err = json.Unmarshal(respBody, clusterInfo)
+			var clusterInfo model.ClusterInfo
+			log.Printf("Cluster info resp body: %+q\n", respBody)
+			err = json.Unmarshal(respBody, &clusterInfo)
 			if err != nil {
 				log.Fatalf("Could not deserialize json due to %s\n", err.Error())
 			}
 			if len(clusterInfo.NodeIPs) == 0 {
 				log.Fatal("Cannot redirect to mesh if there is no available nodes\n")
 			}
+			log.Printf("Cluster nodes: %+q\n", clusterInfo.NodeIPs)
+			publishedPort := getPublishedPort(&clusterInfo)
+			log.Printf("Published port: %+q\n", publishedPort)
+
 			serviceInfo.NodeIPs = clusterInfo.NodeIPs
-			serviceInfo.PublishedPort = getPublishedPort(clusterInfo)
+			serviceInfo.PublishedPort = publishedPort
+
 		} else {
 			log.Fatalf("Received HTTP Status Code Response %d with Body: %s\n", resp.StatusCode, respBody)
 		}
@@ -82,7 +89,7 @@ func buildServiceInfo(serviceInfo *ServiceInfo) {
 
 func getPublishedPort(clusterInfo *model.ClusterInfo) uint32 {
 	n := len(clusterInfo.ManagerAddresses)
-	for i := 0;; i = (i + 1) % n {
+	for i := 0; ; i = (i + 1) % n {
 		servicesUrl := fmt.Sprintf("http://%s/v1.40/services/%s", clusterInfo.ManagerAddresses[i], *serviceName)
 		resp, err := http.Get(servicesUrl)
 		if err != nil {
@@ -114,6 +121,7 @@ func getPublishedPort(clusterInfo *model.ClusterInfo) uint32 {
 func main() {
 	flag.Parse()
 
+	log.Printf("TO WORKANDO\n")
 	if *yGen == 0 {
 		log.Fatalf("ygen can not be 0. ygen:%d", *yGen)
 	}
@@ -125,7 +133,7 @@ func main() {
 		log.Fatalf("cannot listen to -in=%q: %s", fmt.Sprintf(":%s", *port), err)
 	}
 	var functionUpWg sync.WaitGroup
-	serviceInfo := ServiceInfo{NodeIPs: make([]string, 0, 0), PublishedPort:0}
+	serviceInfo := ServiceInfo{Mutex: sync.Mutex{}}
 	functionUpWg.Add(1)
 	var t *transport
 	if *useMesh {

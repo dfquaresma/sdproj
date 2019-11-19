@@ -41,7 +41,7 @@ do
 
     fi
     cd ../../experiment
-    sleep 20
+    sleep 10
 
     FILE_NAME="${RESULTS_PATH}${FUNC}-${flag}${EXPID}.csv"
     echo -e "id;body;status;latency" > ${FILE_NAME}

@@ -17,19 +17,19 @@ const (
 )
 
 type transport struct {
-	isAvailable    bool
-	client         *fasthttp.HostClient
-	protocolClient *fasthttp.HostClient
-	protocolTarget string
-	waiter         pendingWaiter
-	window         sampleWindow
-	st             sheddingThreshold
-	printGC        bool
-	mu             sync.Mutex
-	checking       bool
-	rMeshClient    *fasthttp.HostClient
-	useRoutingMesh bool
-	functionUpWg   *sync.WaitGroup
+	isAvailable         bool
+	client              *fasthttp.HostClient
+	protocolClient      *fasthttp.HostClient
+	protocolTarget      string
+	waiter              pendingWaiter
+	window              sampleWindow
+	st                  sheddingThreshold
+	printGC             bool
+	mu                  sync.Mutex
+	checking            bool
+	rMeshClient         *fasthttp.HostClient
+	useRoutingMesh      bool
+	functionUpWg        *sync.WaitGroup
 	functionServiceInfo *ServiceInfo
 }
 
@@ -43,11 +43,10 @@ func (t *transport) RoundTrip(ctx *fasthttp.RequestCtx) {
 		if !t.isAvailable {
 			t.mu.Unlock()
 			if t.useRoutingMesh {
-				meshNodesSize := len(t.functionServiceInfo.NodeIPs)
-				if meshNodesSize == 0 {
+				if t.functionServiceInfo.NodeIPs == nil || len(t.functionServiceInfo.NodeIPs) == 0 {
 					panic(fmt.Sprint("Unable to redirect to a zero meshing cluster"))
 				}
-				randomIndex := rand.Intn(meshNodesSize)
+				randomIndex := rand.Intn(len(t.functionServiceInfo.NodeIPs))
 				t.rMeshClient.Addr = fmt.Sprintf("%s:%d", t.functionServiceInfo.NodeIPs[randomIndex], t.functionServiceInfo.PublishedPort)
 				ctx.Request.Header.Del("Connection")
 				if err := t.rMeshClient.Do(&ctx.Request, &ctx.Response); err != nil {
@@ -197,7 +196,7 @@ func newMeshedTransport(target string, serviceInfo *ServiceInfo, gciTarget strin
 			Dial:         fasthttp.Dial,
 			ReadTimeout:  120 * time.Second,
 			WriteTimeout: 120 * time.Second,
-		}, 
+		},
 		useRoutingMesh: true,
 		rMeshClient: &fasthttp.HostClient{
 			Dial:         fasthttp.Dial,
@@ -210,11 +209,11 @@ func newMeshedTransport(target string, serviceInfo *ServiceInfo, gciTarget strin
 			ReadTimeout:  120 * time.Second,
 			WriteTimeout: 120 * time.Second,
 		},
-		protocolTarget: fmt.Sprintf("http://%s/%s", gciTarget, gciCmdPath),
-		window:         newSampleWindow(time.Now().UnixNano()),
-		st:             newSheddingThreshold(time.Now().UnixNano(), yGen),
-		printGC:        printGC,
-		functionUpWg:	functionUpWg,
+		protocolTarget:      fmt.Sprintf("http://%s/%s", gciTarget, gciCmdPath),
+		window:              newSampleWindow(time.Now().UnixNano()),
+		st:                  newSheddingThreshold(time.Now().UnixNano(), yGen),
+		printGC:             printGC,
+		functionUpWg:        functionUpWg,
 		functionServiceInfo: serviceInfo,
 	}
 }
