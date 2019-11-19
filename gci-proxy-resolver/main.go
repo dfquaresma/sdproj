@@ -94,21 +94,11 @@ func getNodesList(url string, managerIP string) ([]string, error) {
 func handle(info *model.ClusterInfo) http.HandlerFunc {
 	return func (w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "Error while trying to read body\n")
-			return
-		}
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "Error while trying to parse body: %+q\n", body)
-			return
-		}
+		ioutil.ReadAll(r.Body)
 		resp, err := json.Marshal(info)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(w, "Could serialize json due to: %v\n", err)
+			fmt.Fprintf(w, "Could not serialize json due to: %s\n", err.Error())
 			return
 		}
 		w.WriteHeader(http.StatusOK)
