@@ -9,11 +9,12 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class Handler implements com.openfaas.model.IHandler {
+    private int count;
 
     public IResponse Handle(IRequest req) {
         callFunction();
         Response res = new Response();
-	    res.setBody("ListFiller GCI! :)");
+	    res.setBody("nogci:" + count++);
 	    return res;
     }
 
