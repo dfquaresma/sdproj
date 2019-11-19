@@ -58,25 +58,34 @@ func getServiceInfo(serviceInfo *model.ServiceInfo) {
 		if err != nil {
 			log.Fatalf("Could not resolve service info to service %s due to %s\n", *serviceName, err.Error())
 		}
-		resp, err := http.Post(*meshResolverURL, "application/json", bytes.NewBuffer(reqBody))
-		if err != nil {
-			log.Fatalf("Could not resolve service info to service %s due to %s\n", *serviceName, err.Error())
+		for i := 0; i < 25; i++ {
+			resp, err := http.Post(*meshResolverURL, "application/json", bytes.NewBuffer(reqBody))
+			if err != nil {
+				log.Fatalf("Could not resolve service info to service %s due to %s\n", *serviceName, err.Error())
+			}
+			respBody, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				log.Fatalf("Could not read response body due to %s\n", err.Error())
+			}
+			resp.Body.Close()
+			if resp.StatusCode < 300 {
+				var tmpSInfo *model.ServiceInfo
+				err = json.Unmarshal(respBody, tmpSInfo)
+				if err != nil {
+					log.Fatalf("Could not deserialize json due to %s\n", err.Error())
+				}
+				if len(tmpSInfo.NodeIPs) == 0 {
+					log.Fatal("Cannot redirect to mesh if there is no available nodes\n")
+				}
+				serviceInfo.NodeIPs = tmpSInfo.NodeIPs
+				serviceInfo.PublishedPort = tmpSInfo.PublishedPort
+			} else if resp.StatusCode == http.StatusNotFound {
+				time.Sleep(100 * time.Millisecond)
+				continue
+			} else {
+				log.Fatalf("Received HTTP Status Code Response %d with Body: %s\n", resp.StatusCode, respBody)
+			}
 		}
-		defer resp.Body.Close()
-		respBody, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatalf("Could not resolve service info to service %s due to %s\n", *serviceName, err.Error())
-		}
-		var tmpSInfo *model.ServiceInfo
-		err = json.Unmarshal(respBody, tmpSInfo)
-		if err != nil {
-			log.Fatalf("Could not deserialize json due to %s\n", err.Error())
-		}
-		if len(tmpSInfo.NodeIPs) == 0 {
-			log.Fatal("Cannot redirect to mesh if there is no available nodes\n")
-		}
-		serviceInfo.NodeIPs = tmpSInfo.NodeIPs
-		serviceInfo.PublishedPort = tmpSInfo.PublishedPort
 	}
 }
 
