@@ -54,7 +54,7 @@ func checkFunction(functionUpWg *sync.WaitGroup) {
 
 func getServiceInfo(serviceInfo *model.ServiceInfo) {
 	if *useMesh {
-		url := fmt.Sprintf("http://%s/", *gateway)
+		url := fmt.Sprintf("http://%s/function/gci-proxy-resolver", *gateway)
 		reqBody, err := json.Marshal(model.Query{ServiceName: *serviceName})
 		if err != nil {
 			log.Fatalf("Could not resolve service info to service %s due to %s\n", *serviceName, err.Error())
