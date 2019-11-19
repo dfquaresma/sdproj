@@ -14,7 +14,7 @@ public class Handler implements com.openfaas.model.IHandler {
     public IResponse Handle(IRequest req) {
         callFunction();
         Response res = new Response();
-	    res.setBody("nogci:" + count++);
+	    res.setBody("" + count++);
 	    return res;
     }
 

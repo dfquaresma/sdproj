@@ -8,4 +8,4 @@ functions:
     handler: ./listfiller-gci
     image: dfquaresma/listfiller-gci:latest
     labels:
-      com.openfaas.scale.min: 20
+      com.openfaas.scale.min: 2
