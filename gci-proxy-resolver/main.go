@@ -25,14 +25,14 @@ func main() {
 	clusterInfo := model.ClusterInfo{ManagerAddresses:managers}
 
 	router := mux.NewRouter()
-	router.HandleFunc("/", handle(&clusterInfo)).Methods(http.MethodPost)
+	router.HandleFunc("/", handle(&clusterInfo)).Methods(http.MethodGet)
 
 	s := &http.Server{
 		Addr:           "127.0.0.1:8082",
 		Handler:        router,
 	}
 
-	conciliationTime := 10 * time.Second
+	conciliationTime := 5 * time.Second
 	apiVersion := "v1.40"
 	go updateInfo(&clusterInfo, conciliationTime, apiVersion)
 
@@ -40,9 +40,8 @@ func main() {
 }
 
 func updateInfo(clusterInfo *model.ClusterInfo, conciliationTime time.Duration, apiVersion string) {
-	i := 0
 	n := len(clusterInfo.ManagerAddresses)
-	for {
+	for i := 0;; i = (i + 1) % n {
 		log.Printf("Using manager %s", clusterInfo.ManagerAddresses[i])
 
 		nodesUrl := fmt.Sprintf("http://%s/%s/nodes", clusterInfo.ManagerAddresses[i], apiVersion)
@@ -53,17 +52,6 @@ func updateInfo(clusterInfo *model.ClusterInfo, conciliationTime time.Duration, 
 		} else {
 			log.Printf("Cannot update nodes list due to: %s", err.Error())
 		}
-
-		servicesUrl := fmt.Sprintf("http://%s/%s/services", clusterInfo.ManagerAddresses[i], apiVersion)
-		publishedPorts, err := getPublishedPorts(servicesUrl)
-		if err == nil {
-			log.Printf("Updating published ports to: %+q", publishedPorts)
-			clusterInfo.PublishedPorts = publishedPorts
-		} else {
-			log.Printf("Cannot update published ports due to: %s", err.Error())
-		}
-
-		i = (i + 1) % n
 		time.Sleep(conciliationTime)
 	}
 }
@@ -99,39 +87,6 @@ func getNodesList(url string) ([]string, error) {
 	return nodeIPs, err
 }
 
-func getPublishedPorts(url string) (map[string]uint32, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Received http status code %d and error while trying to read body: %v", resp.StatusCode, err))
-	}
-
-	var publishedPorts map[string]uint32
-	if resp.StatusCode < 300 {
-		var data []swarm.Service
-
-		err = json.Unmarshal(body, &data)
-		if err == nil {
-			publishedPorts = make(map[string]uint32)
-			for _, service := range data {
-				if service.Endpoint.Ports != nil {
-					for _, portSpec := range service.Endpoint.Ports {
-						publishedPorts[service.Spec.Name] = portSpec.PublishedPort
-					}
-				}
-			}
-		}
-	} else {
-		err = errors.New(fmt.Sprintf("Received http status code %d and response body: %s", resp.StatusCode, body))
-	}
-	return publishedPorts, err
-}
-
 func handle(info *model.ClusterInfo) http.HandlerFunc {
 	return func (w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
@@ -141,21 +96,12 @@ func handle(info *model.ClusterInfo) http.HandlerFunc {
 			fmt.Fprintf(w, "Error while trying to read body\n")
 			return
 		}
-		var service model.Query
-		err = json.Unmarshal(body, &service)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, "Error while trying to parse body: %+q\n", body)
 			return
 		}
-		publishedPort, ok := info.PublishedPorts[service.ServiceName]
-		if !ok {
-			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprintf(w, "Could not find published port for %s service\n", service.ServiceName)
-			return
-		}
-		serviceInfo := model.ServiceInfo{NodeIPs:info.NodeIPs, PublishedPort: publishedPort}
-		resp, err := json.Marshal(serviceInfo)
+		resp, err := json.Marshal(info)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprintf(w, "Could serialize json due to: %v\n", err)
