@@ -10,20 +10,21 @@ output: pdf_document
 # GCI vs NOGCI
 ```{r echo=FALSE, results='hide', message=FALSE}
 source("functions.R")
-
-gci   = filter(read.al(paste("../experiment/results17/",   "listfiller-gci1", ".csv", sep="")), status == 200)
-nogci = filter(read.al(paste("../experiment/results17/", "listfiller-nogci1", ".csv", sep="")), status == 200)
-for (i in 2:10) {
-  gci   = rbind(gci, filter(read.al(paste("../experiment/results17/",   "listfiller-gci", as.character(i), ".csv", sep="")), status == 200))
-  nogci = rbind(nogci, filter(read.al(paste("../experiment/results17/", "listfiller-nogci", as.character(i), ".csv", sep="")), status == 200))
+get_data <- function(expid, case) {
+  data = filter(read.al(paste("../experiment/results", expid, "/listfiller-", case, "1.csv", sep="")), status == 200)
+  for (i in 2:10) {
+    data = rbind(data, filter(read.al(paste("../experiment/results", expid, "/listfiller-", case, as.character(i), ".csv", sep="")), status == 200))
+  }
+  data$latency = data$latency * 1000
+  return (data)
 }
-gci$latency = gci$latency * 1000
-nogci$latency = nogci$latency * 1000
+gci = get_data("", "gci")
+nogci = get_data("", "nogci")
 ```
 
 #### ECDF for response time
 ```{r  fig.width=15, fig.height=5, echo=FALSE}
-graph_tail(gci$latency, nogci$latency, title="THUMBNAILATOR ECDF LATENCY", x_limit_sup=400)
+graph_tail(gci$latency, nogci$latency, title="THUMBNAILATOR ECDF LATENCY", x_limit_inf=0, x_limit_sup=400)
 ```
 
 #### summary table of confidence interval for response time, both in milliseconds

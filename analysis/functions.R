@@ -52,7 +52,7 @@ summary_table <- function(df1, tag1, df2, tag2) {
   df
 }
 
-graph_tail <- function(gci, nogci, title, x_limit_sup) {
+graph_tail <- function(gci, nogci, title, x_limit_inf, x_limit_sup) {
   cmp <- rbind(
     data.frame("response_time"=gci, Type="GCI"),
     data.frame("response_time"=nogci, Type="NOGCI")
@@ -85,7 +85,7 @@ graph_tail <- function(gci, nogci, title, x_limit_sup) {
     
     #scale_x_continuous(breaks=seq(0, max(cmp$latency), 10)) +
     #coord_cartesian(ylim = c(0.99, 1)) +
-    xlim(0, x_limit_sup) +
+    xlim(x_limit_inf, x_limit_sup) +
     theme(legend.position="top") +
     scale_color_manual(breaks = c("GCI", "NOGCI"), values=c("blue", "red")) +
     theme_bw() +
