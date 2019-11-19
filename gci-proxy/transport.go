@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/dfquaresma/sdproj/gci-proxy-resolver/model"
 	"math/rand"
 	"strconv"
 	"sync"
@@ -31,7 +30,7 @@ type transport struct {
 	rMeshClient    *fasthttp.HostClient
 	useRoutingMesh bool
 	functionUpWg   *sync.WaitGroup
-	functionServiceInfo *model.ServiceInfo
+	functionServiceInfo *ServiceInfo
 }
 
 func timeMillis() int64 {
@@ -187,7 +186,7 @@ func newTransport(target string, yGen int64, printGC bool, gciTarget, gciCmdPath
 	}
 }
 
-func newMeshedTransport(target string, serviceInfo *model.ServiceInfo, gciTarget string, gciCmdPath string, yGen int64, printGC bool, functionUpWg *sync.WaitGroup) *transport {
+func newMeshedTransport(target string, serviceInfo *ServiceInfo, gciTarget string, gciCmdPath string, yGen int64, printGC bool, functionUpWg *sync.WaitGroup) *transport {
 	if gciTarget == "" {
 		gciTarget = target
 	}
