@@ -20,24 +20,30 @@ get_data <- function(expid, case) {
 }
 gci = get_data("", "gci")
 nogci = get_data("", "nogci")
+gci_nocoldstart   = filter(  gci, body > 0)
+nogci_nocoldstart = filter(nogci, body > 0)
 ```
 
-#### ECDF for response time
+#### ECDF for response time (with coldstart)
 ```{r  fig.width=15, fig.height=5, echo=FALSE}
-graph_tail(gci$latency, nogci$latency, title="THUMBNAILATOR ECDF LATENCY", x_limit_inf=0, x_limit_sup=400)
+graph_tail(gci$latency, nogci$latency, title="THUMBNAILATOR ECDF LATENCY - p0 to p100", x_limit_inf=0, x_limit_sup=300)
+graph_tail(gci$latency, nogci$latency, title="THUMBNAILATOR ECDF LATENCY - p0 to p95", x_limit_inf=3, x_limit_sup=10)
+graph_tail(gci$latency, nogci$latency, title="THUMBNAILATOR ECDF LATENCY - p95 to p100", x_limit_inf=10, x_limit_sup=50)
 ```
 
-#### summary table of confidence interval for response time, both in milliseconds
+#### ECDF for response time (no coldstart)
+```{r  fig.width=15, fig.height=5, echo=FALSE}
+graph_tail(gci_nocoldstart$latency, nogci_nocoldstart$latency, title="THUMBNAILATOR ECDF LATENCY - p0 to p100", x_limit_inf=0, x_limit_sup=300)
+graph_tail(gci_nocoldstart$latency, nogci_nocoldstart$latency, title="THUMBNAILATOR ECDF LATENCY - p0 to p95", x_limit_inf=3, x_limit_sup=10)
+graph_tail(gci_nocoldstart$latency, nogci_nocoldstart$latency, title="THUMBNAILATOR ECDF LATENCY - p95 to p100", x_limit_inf=10, x_limit_sup=50)
+```
+
+#### summary table of confidence interval for response time, both in milliseconds (with coldstart)
 ```{r  fig.width=15, fig.height=5, echo=FALSE}
 summary_table(gci$latency, "gci", nogci$latency, "nogci")
 ```
 
-#### GCI: plot response time
-```{r fig.width=10, fig.height=5, echo=FALSE}
-plot(gci$latency, ylab="response time", main="GCI")
-```
-
-#### NOGCI: plot response time
-```{r fig.width=10, fig.height=5, echo=FALSE}
-plot(nogci$latency, ylab="response time", main="NOGCI")
+#### summary table of confidence interval for response time, both in milliseconds (no Coldstart)
+```{r  fig.width=15, fig.height=5, echo=FALSE}
+summary_table(gci_nocoldstart$latency, "gci", nogci_nocoldstart$latency, "nogci")
 ```
