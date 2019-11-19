@@ -45,7 +45,7 @@ func updateInfo(clusterInfo *model.ClusterInfo, conciliationTime time.Duration, 
 		log.Printf("Using manager %s", clusterInfo.ManagerAddresses[i])
 
 		nodesUrl := fmt.Sprintf("http://%s/%s/nodes", clusterInfo.ManagerAddresses[i], apiVersion)
-		nodeList, err := getNodesList(nodesUrl)
+		nodeList, err := getNodesList(nodesUrl, strings.Split(clusterInfo.ManagerAddresses[i], ":")[0])
 		if err == nil {
 			log.Printf("Updating nodes list to: %+q", nodeList)
 			clusterInfo.NodeIPs = nodeList
@@ -56,7 +56,7 @@ func updateInfo(clusterInfo *model.ClusterInfo, conciliationTime time.Duration, 
 	}
 }
 
-func getNodesList(url string) ([]string, error) {
+func getNodesList(url string, managerIP string) ([]string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -76,8 +76,12 @@ func getNodesList(url string) ([]string, error) {
 		if err == nil {
 			nodeIPs = make([]string, 0, 10)
 			for _, node := range data {
-				if node.Status.State == swarm.NodeStateReady && node.Status.Addr != "0.0.0.0" {
-					nodeIPs = append(nodeIPs, node.Status.Addr)
+				if node.Status.State == swarm.NodeStateReady {
+					if node.Status.Addr == "0.0.0.0" {
+						nodeIPs = append(nodeIPs, managerIP)
+					} else {
+						nodeIPs = append(nodeIPs, node.Status.Addr)
+					}
 				}
 			}
 		}
