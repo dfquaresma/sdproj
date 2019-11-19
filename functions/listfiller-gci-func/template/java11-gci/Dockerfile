@@ -52,4 +52,4 @@ EXPOSE 8080
 
 HEALTHCHECK --interval=2s CMD [ -e /tmp/.lock ] || exit 1
 
-CMD ["sh","-c","nohup ./gci/gci-proxy --port=8081 --use_mesh=true --target=127.0.0.1:8082 --mesh_target=150.165.75.122:31123 --gci_target=127.0.0.1:8500 --ygen=104857600 >/home/app/proxy-stdout.log 2>/home/app/proxy-stderr.log & fwatchdog"]
+CMD ["sh","-c","nohup ./gci/gci-proxy --port=8081 --use_mesh=true --target=127.0.0.1:8082 --service_name=listfiller-gci --mesh_resolver_url=http://150.165.75.122:8080/function/gci-proxy-resolve --gci_target=127.0.0.1:8500 --ygen=104857600 >/home/app/proxy-stdout.log 2>/home/app/proxy-stderr.log & fwatchdog"]

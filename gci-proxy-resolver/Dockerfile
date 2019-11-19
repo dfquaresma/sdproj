@@ -4,7 +4,6 @@ FROM golang:1.11-alpine3.10 as builder
 
 # Allows you to add additional packages via build-arg
 ARG ADDITIONAL_PACKAGE
-ARG CGO_ENABLED=0
 
 COPY --from=watchdog /fwatchdog /usr/bin/fwatchdog
 RUN chmod +x /usr/bin/fwatchdog

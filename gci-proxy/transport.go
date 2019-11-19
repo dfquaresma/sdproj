@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/dfquaresma/sdproj/gci-proxy-resolver/model"
+	"math/rand"
 	"strconv"
 	"sync"
 	"time"
@@ -29,6 +31,7 @@ type transport struct {
 	rMeshClient    *fasthttp.HostClient
 	useRoutingMesh bool
 	functionUpWg   *sync.WaitGroup
+	functionServiceInfo *model.ServiceInfo
 }
 
 func timeMillis() int64 {
@@ -41,8 +44,15 @@ func (t *transport) RoundTrip(ctx *fasthttp.RequestCtx) {
 		if !t.isAvailable {
 			t.mu.Unlock()
 			if t.useRoutingMesh {
+				meshNodesSize := len(t.functionServiceInfo.NodeIPs)
+				if meshNodesSize == 0 {
+					panic(fmt.Sprint("Unable to redirect to a zero meshing cluster"))
+				}
+				randomIndex := rand.Intn(meshNodesSize)
+				t.rMeshClient.Addr = fmt.Sprintf("%s:%d", t.functionServiceInfo.NodeIPs[randomIndex], t.functionServiceInfo.PublishedPort)
 				ctx.Request.Header.Del("Connection")
 				if err := t.rMeshClient.Do(&ctx.Request, &ctx.Response); err != nil {
+					// TODO: retry to another mesh node
 					panic(fmt.Sprintf("Problem redirecting to routing mesh:%q", err))
 				}
 				ctx.Response.Header.Del("Connection")
@@ -177,7 +187,7 @@ func newTransport(target string, yGen int64, printGC bool, gciTarget, gciCmdPath
 	}
 }
 
-func newMeshedTransport(target, rMeshTarget, gciTarget, gciCmdPath string, yGen int64, printGC bool, functionUpWg *sync.WaitGroup) *transport {
+func newMeshedTransport(target string, serviceInfo *model.ServiceInfo, gciTarget string, gciCmdPath string, yGen int64, printGC bool, functionUpWg *sync.WaitGroup) *transport {
 	if gciTarget == "" {
 		gciTarget = target
 	}
@@ -191,7 +201,6 @@ func newMeshedTransport(target, rMeshTarget, gciTarget, gciCmdPath string, yGen 
 		}, 
 		useRoutingMesh: true,
 		rMeshClient: &fasthttp.HostClient{
-			Addr:         rMeshTarget,
 			Dial:         fasthttp.Dial,
 			ReadTimeout:  120 * time.Second,
 			WriteTimeout: 120 * time.Second,
@@ -207,5 +216,6 @@ func newMeshedTransport(target, rMeshTarget, gciTarget, gciCmdPath string, yGen 
 		st:             newSheddingThreshold(time.Now().UnixNano(), yGen),
 		printGC:        printGC,
 		functionUpWg:	functionUpWg,
+		functionServiceInfo: serviceInfo,
 	}
 }
